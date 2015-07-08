@@ -4,8 +4,10 @@
 # transform AROME_METCOOP 2.5Km files to 1Km UTM grid used for seNorge2
 #
 # set dates
-DATESTART=2014.06.01
-DATEEND=2015.06.01
+#DATESTART=2014.06.01
+#DATEEND=2014.08.31
+DATESTART=$1
+DATEEND=$2
 # extract year/month/day
 yyyy_b=${DATESTART:0:4}
 mm_b=${DATESTART:5:2}
@@ -25,6 +27,7 @@ ss=$ss_b
 ss_add=$(( 3600*24 ))
 # fixed variable
 path_fixed="/vol/starc/DNMI_AROME_METCOOP"
+path_out_fixed="./"
 # cycle over days
 while [ "$ss" -lt "$ss_e" ] 
 do
@@ -33,13 +36,15 @@ do
   dd=`date --date="1970-01-01 $ss sec UTC" +%d`
   # 4 model runs every day: 00,06,12,18 UTC
   for hh in 00 06 12 18; do
-    # set filename
-    filename=$path_fixed/$yyyy/$mm/$dd"/AROME_MetCoOp_"$hh"_sfx.nc_"$yyyy$mm$dd
-    if [ ! -f $filename ]; then
-      echo "@@" $filename not found
+    # set filenames
+    filename_in=$path_fixed/$yyyy/$mm/$dd"/t2m500yr_hc_"$hh".nc_"$yyyy$mm$dd
+    if [ ! -f $filename_in ]; then
+      echo "@@" $filename_in not found
     else
-      echo $filename
-#      gridpp ... -> output in /disk1/projects/klimagrid_T2m/AROME_MetCoOp_UTM
+      echo $filename_in
+      mkdir -p $path_out_fixed/$yyyy/$mm/$dd
+      filename_out=$path_out_fixed/$yyyy/$mm/$dd"/t2m1000seNorge2_"$hh".nc_"$yyyy$mm$dd
+      fimex --input.file=$filename_in --input.type="nc4" --output.file=$filename_out --output.type="nc4" --interpolate.method="nearestneighbor" --interpolate.projString="+proj=utm +zone=33 +ellps=WGS84" --interpolate.xAxisValues="-75000,-74000,...,1119000" --interpolate.yAxisValues="6450000,6451000,...,7999000" --interpolate.xAxisUnit="m" --interpolate.yAxisUnit="m"
     fi
   done
 # update day 
